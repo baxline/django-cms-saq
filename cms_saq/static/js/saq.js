@@ -65,7 +65,7 @@ $(function () {
             $.each($('div[data-dependency]'), function(idx, qs){
                 dependency = $(qs).attr('data-dependency');
 
-                if(!$('input:[id$=' + dependency + ']').length){
+                if(!$('input[id$=' + dependency + ']').length){
                     $(qs).find('.saq-question').trigger('saq-disable');
                     return;
                 }
