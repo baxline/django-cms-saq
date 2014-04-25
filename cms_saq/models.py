@@ -65,6 +65,11 @@ class Question(CMSPlugin):
         Answer, null=True, blank=True, related_name='trigger_questions')
 
     def copy_relations(self, oldinstance):
+        for answer in oldinstance.answers.all():
+            answer.pk = None
+            answer.question = self
+            answer.save()
+
         self.depends_on_answer = oldinstance.depends_on_answer
 
     @staticmethod
@@ -172,6 +177,9 @@ class FormNav(CMSPlugin):
 
     submission_set_tag = models.CharField(
         max_length=255, blank=True, null=True)
+
+    def copy_relations(self, old):
+        self.end_page_condition_question = old.end_page_condition_question
 
 
 class SectionedScoring(CMSPlugin):
