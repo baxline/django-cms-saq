@@ -23,9 +23,15 @@ def _submit(request):
 
         # validate the question
         try:
-            question = Question.objects.get(slug=question_slug)
+            question = Question.objects.get(
+                slug=question_slug,
+                placeholder__page__publisher_is_draft=False,
+            )
         except Question.DoesNotExist:
-            return HttpResponseBadRequest("Invalid question '%s'" % question_slug)
+            return HttpResponseBadRequest(
+                "Invalid question '%s'" % question_slug,
+            )
+
         # check answers is a list of slugs
         if question.question_type != 'F' and not ANSWER_RE.match(answers):
             return HttpResponseBadRequest("Invalid answers: %s" % answers)
@@ -33,13 +39,15 @@ def _submit(request):
         try:
             score = question.score(answers)
         except Answer.DoesNotExist:
-            return HttpResponseBadRequest("Invalid answer '%s:%s'" % (question_slug, answers))
+            return HttpResponseBadRequest(
+                "Invalid answer '%s:%s'" % (question_slug, answers)
+            )
 
-        # save!
+        # save, but don't update submissions belonging to an existing set
         filter_attrs = {
             'user': request.user,
             'question': question_slug,
-            'submission_set': None # Don't update submissions belonging to an existing set
+            'submission_set': None,
         }
 
         attrs = {'answer': answers, 'score': score}
@@ -50,17 +58,17 @@ def _submit(request):
             attrs.update(filter_attrs)
             Submission.objects.create(**attrs)
 
-
     # Create submission set if requested
     if submission_set_tag and submission_set_slug:
         submission_set_tag = submission_set_tag[0]
         submission_set_slug = submission_set_slug[0]
 
         if submission_set_tag and submission_set_slug:
-            _create_submission_set(request, submission_set_tag, submission_set_slug)
+            _create_submission_set(
+                request, submission_set_tag, submission_set_slug,
+            )
 
     return HttpResponse("OK")
-
 
 
 if getattr(settings, "SAQ_LAZYSIGNUP", False):
@@ -68,6 +76,7 @@ if getattr(settings, "SAQ_LAZYSIGNUP", False):
     submit = allow_lazy_user(_submit)
 else:
     submit = login_required(_submit)
+
 
 def _create_submission_set(request, submission_set_tag, submission_set_slug):
     """ Creates a submission set from any submissions matching the given
@@ -87,7 +96,9 @@ def _create_submission_set(request, submission_set_tag, submission_set_slug):
     submission_set_slug = try_slug
 
     # Add all tagged submissions to this set (if not already in a set)
-    set_questions = Question.objects.filter(tags__name=submission_set_tag).values_list('slug', flat=True)
+    set_questions = Question.objects.filter(
+        tags__name=submission_set_tag,
+    ).values_list('slug', flat=True)
 
     submissions = Submission.objects.filter(
         submission_set=None,
@@ -111,7 +122,9 @@ def scores(request):
     slugs = request.GET.getlist('q')
     if slugs == []:
         return HttpResponseBadRequest("No questions supplied")
-    submissions = Submission.objects.filter(user=request.user, question__in=slugs)
+    submissions = Submission.objects.filter(
+        user=request.user, question__in=slugs,
+    )
     submissions = [[s.question, {'answer': s.answer, 'score': s.score}]
             for s in submissions]
     data = {
@@ -122,4 +135,3 @@ def scores(request):
     return HttpResponse(simplejson.dumps(data), mimetype="application/json")
 
 # TODO benchmarking
-
