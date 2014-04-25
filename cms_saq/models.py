@@ -16,6 +16,9 @@ class QuestionnaireText(AbstractText):
     depends_on_answer = models.ForeignKey(
         'cms_saq.Answer', null=True, blank=True, related_name='trigger_text')
 
+    def copy_relations(self, oldinstance):
+        self.depends_on_answer = oldinstance.depends_on_answer
+
 
 class Answer(models.Model):
     title = models.CharField(max_length=255)
