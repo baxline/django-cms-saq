@@ -24,7 +24,7 @@ def _submit(request):
         try:
             question = Question.objects.get(
                 slug=question_slug,
-                placeholder__page__publisher_is_draft=False,
+                #placeholder__page__publisher_is_draft=False,
             )
         except Question.DoesNotExist:
             return HttpResponseBadRequest(
@@ -107,6 +107,7 @@ def _create_submission_set(request, submission_set_tag):
     if submissions:
         submission_set = SubmissionSet.objects.create(
             slug=sub_slug,
+            tag=submission_set_tag,
             user=request.user
         )
         submissions.update(submission_set=submission_set)
@@ -131,4 +132,37 @@ def scores(request):
     }
     return HttpResponse(simplejson.dumps(data), mimetype="application/json")
 
+
+@require_POST
+def change_answer_set(request):
+    """ Switch to review/editting of current answers
+    """
+
+    post_data = datastructures.MultiValueDict(request.POST)
+    sset = post_data.pop('submission', '')
+
+    try:
+        submission_set = SubmissionSet.objects.get(pk__in=sset)
+    except:
+        return HttpResponse("NOK", status=400)
+
+    if post_data.get('action', None) == 'delete':
+        # Delete given set
+        submission_set.delete()
+    else:
+        # Create submission set of current answers
+        _create_submission_set(
+            request, submission_set.tag
+        )
+
+        # Unbind our submission set (puts submissions back as 'editable')
+        submission_set.submissions.update(
+            submission_set=None
+        )
+
+        # Delete this submission set
+        submission_set.delete()
+
+
+    return HttpResponse("OK")
 # TODO benchmarking

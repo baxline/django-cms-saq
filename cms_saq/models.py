@@ -133,7 +133,9 @@ class SubmissionSet(models.Model):
         sets of answers to the same questionnaire.
     """
     slug = models.SlugField(blank=True)
+    tag = models.SlugField(blank=True)
     user = models.ForeignKey('auth.User', related_name='saq_submissions_sets')
+
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -184,6 +186,8 @@ class SubmissionSetReview(CMSPlugin):
     submission_set_tag = models.CharField(
         max_length=255, blank=True, null=True)
 
+    count_optional = models.BooleanField(default=False)
+
     def sets_for_user(self, user):
         """ Return available submission sets for the given user
         """
@@ -192,6 +196,15 @@ class SubmissionSetReview(CMSPlugin):
             slug__startswith=self.submission_set_tag
         )
         return _sets
+
+    @property
+    def num_questions(self):
+        questions = Question.all_in_tree(self.page)
+
+        if not self.count_optional:
+            questions = questions.filter(optional=False)
+
+        return questions.count()
 
 
 class SectionedScoring(CMSPlugin):
@@ -224,7 +237,9 @@ class ProgressBar(CMSPlugin):
 
     def progress_for_user(self, user):
         subs = Submission.objects.filter(
-            user=user).values_list('question', flat=True)
+            user=user,
+            submission_set=None
+        ).values_list('question', flat=True)
         questions = Question.all_in_tree(self.page)
 
         if not self.count_optional:
