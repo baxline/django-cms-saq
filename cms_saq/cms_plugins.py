@@ -1,4 +1,5 @@
-import itertools, operator
+import itertools
+import operator
 
 from django.contrib import admin
 from django.utils.translation import ugettext as _
@@ -15,6 +16,7 @@ from cms.plugins.text.cms_plugins import TextPlugin
 from cms.plugins.text.models import Text
 
 from bs4 import BeautifulSoup
+
 
 class TranslatedTextPlugin(TextPlugin):
     """ Text plugin that pushes every text string through i18n translations
@@ -34,6 +36,7 @@ class TranslatedTextPlugin(TextPlugin):
         context['translated'] = unicode(soup)
         return context
 
+
 class QuestionnaireTextPlugin(TranslatedTextPlugin):
     """ Questionnaire text dependent on answers
     """
@@ -43,7 +46,9 @@ class QuestionnaireTextPlugin(TranslatedTextPlugin):
     name = "QuestionnaireText"
 
     def render(self, context, instance, placeholder):
-        context = super(QuestionnaireTextPlugin, self).render(context, instance, placeholder)
+        context = super(QuestionnaireTextPlugin, self).render(
+            context, instance, placeholder,
+        )
         user = context['request'].user
 
         triggered = True
@@ -55,8 +60,8 @@ class QuestionnaireTextPlugin(TranslatedTextPlugin):
             try:
                 Submission.objects.get(
                     user=user,
-                    question= instance.depends_on_answer.question.slug,
-                    answer = instance.depends_on_answer.slug,
+                    question=instance.depends_on_answer.question.slug,
+                    answer=instance.depends_on_answer.slug,
                     submission_set=submission_set,
                 )
                 triggered = True
@@ -71,17 +76,21 @@ class QuestionnaireTextPlugin(TranslatedTextPlugin):
         context.update(extra)
         return context
 
+
 class AnswerAdmin(admin.StackedInline):
     model = Answer
     extra = 0
     verbose_name = "answer"
     prepopulated_fields = {"slug": ("title",)}
 
+
 class NoHelpTextAnswerAdmin(AnswerAdmin):
     exclude = ('help_text',)
 
+
 class NoHelpTextGroupedAnswerAdmin(NoHelpTextAnswerAdmin):
     model = GroupedAnswer
+
 
 class QuestionPlugin(CMSPluginBase):
     model = Question
@@ -101,8 +110,8 @@ class QuestionPlugin(CMSPluginBase):
             try:
                 Submission.objects.get(
                     user=user,
-                    question= instance.depends_on_answer.question.slug,
-                    answer = instance.depends_on_answer.slug,
+                    question=instance.depends_on_answer.question.slug,
+                    answer=instance.depends_on_answer.slug,
                     submission_set=submission_set,
                 )
                 triggered = True
@@ -121,7 +130,7 @@ class QuestionPlugin(CMSPluginBase):
                 extra['submission'] = Submission.objects.get(
                     user=user,
                     question=instance.slug,
-                    submission_set = submission_set
+                    submission_set=submission_set,
                 )
             except Submission.DoesNotExist:
                 pass
@@ -140,11 +149,13 @@ class SessionDefinition(QuestionPlugin):
     question_type = "S"
     exclude = ('question_type', 'help_text')
 
+
 class SingleChoiceQuestionPlugin(QuestionPlugin):
     name = "Single Choice Question"
     render_template = "cms_saq/single_choice_question.html"
     question_type = "S"
     exclude = ('question_type', 'help_text')
+
 
 class MultiChoiceQuestionPlugin(QuestionPlugin):
     name = "Multi Choice Question"
@@ -152,11 +163,13 @@ class MultiChoiceQuestionPlugin(QuestionPlugin):
     question_type = "M"
     exclude = ('question_type', 'help_text')
 
+
 class DropDownQuestionPlugin(QuestionPlugin):
     name = "Drop-down Question"
     render_template = "cms_saq/drop_down_question.html"
     inlines = [NoHelpTextAnswerAdmin]
     question_type = "S"
+
 
 class GroupedDropDownQuestionPlugin(QuestionPlugin):
     name = "Grouped Drop-down Question"
@@ -165,12 +178,21 @@ class GroupedDropDownQuestionPlugin(QuestionPlugin):
     question_type = "S"
 
     def render(self, context, instance, placeholder):
-        new_ctx = super(GroupedDropDownQuestionPlugin, self).render(context, instance, placeholder)
-        answers = list(GroupedAnswer.objects.filter(question=instance))
-        grouped_answers = itertools.groupby(answers, operator.attrgetter('group'))
-        grouped_answers = [[key, list(group)] for key, group in grouped_answers]
+        new_ctx = super(GroupedDropDownQuestionPlugin, self).render(
+            context, instance, placeholder,
+        )
+        answers = list(
+            GroupedAnswer.objects.filter(question__slug=instance.slug)
+        )
+        grouped_answers = itertools.groupby(
+            answers, operator.attrgetter('group'),
+        )
+        grouped_answers = [
+            [key, list(group)] for key, group in grouped_answers
+        ]
         new_ctx.update({'grouped_answers': grouped_answers})
         return new_ctx
+
 
 class FreeTextQuestionPlugin(QuestionPlugin):
     name = "Free Text Question"
@@ -178,13 +200,17 @@ class FreeTextQuestionPlugin(QuestionPlugin):
     inlines = []
     question_type = "F"
 
+
 class FreeNumberQuestionPlugin(FreeTextQuestionPlugin):
     name = "Free Number Question"
 
     def render(self, context, instance, placeholder):
-        context = super(FreeNumberQuestionPlugin, self).render(context, instance, placeholder)
+        context = super(FreeNumberQuestionPlugin, self).render(
+            context, instance, placeholder,
+        )
         context['numeric'] = True
         return context
+
 
 class FormNavPlugin(CMSPluginBase):
     model = FormNav
@@ -206,10 +232,12 @@ class FormNavPlugin(CMSPluginBase):
         })
         return context
 
+
 class ScoreSectionAdmin(admin.TabularInline):
     model = ScoreSection
     extra = 0
     verbose_name = "section"
+
 
 class SectionedScoringPlugin(CMSPluginBase):
     model = SectionedScoring
@@ -226,6 +254,7 @@ class SectionedScoringPlugin(CMSPluginBase):
         })
         return context
 
+
 class ProgressBarPlugin(CMSPluginBase):
     model = ProgressBar
     name = "Progress Bar"
@@ -240,6 +269,7 @@ class ProgressBarPlugin(CMSPluginBase):
             'progress': float(answered) / float(total) * 100,
         })
         return context
+
 
 class BulkAnswerPlugin(CMSPluginBase):
     model = BulkAnswer
@@ -278,5 +308,3 @@ plugin_pool.register_plugin(BulkAnswerPlugin)
 plugin_pool.register_plugin(SessionDefinition)
 plugin_pool.register_plugin(QuestionnaireTextPlugin)
 plugin_pool.register_plugin(TranslatedTextPlugin)
-
-
