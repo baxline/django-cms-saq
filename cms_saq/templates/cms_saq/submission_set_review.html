@@ -1,0 +1,27 @@
+{% load cms_tags sekizai_tags %}
+{% load i18n %}
+
+{% addtoblock "js" %}
+<script type="text/javascript">
+    $(function () {
+    });
+</script>
+{% endaddtoblock %}
+{% if submission_sets %}
+<div class="submissions-sets">
+    <h2>Your submissions to this questionnaire:</h2>
+    <ul>
+        {% for sset in submission_sets %}
+        <li>
+            <div>
+                <span class='label'>User:</span><span class='value'>{{ sset.user.email }}</span>
+                <span class='label'>Updated:</span><span class='value'>{{ sset.updated }}</span>
+                <span class='op edit'>Review & Edit</span>
+                <span class='op delete'>Delete</span>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+{# vim:set filetype=htmldjango: #}

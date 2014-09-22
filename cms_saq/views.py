@@ -16,7 +16,6 @@ ANSWER_RE = re.compile(r'^[\w-]+(,[\w-]+)*$')
 def _submit(request):
 
     post_data = datastructures.MultiValueDict(request.POST)
-    submission_set_slug = post_data.pop('end_submission_set', '')
     submission_set_tag = post_data.pop('submission_set_tag', '')
 
     for question_slug, answers in post_data.iteritems():
@@ -52,12 +51,11 @@ def _submit(request):
 
 
     # Create submission set if requested
-    if submission_set_tag and submission_set_slug:
+    if submission_set_tag:
         submission_set_tag = submission_set_tag[0]
-        submission_set_slug = submission_set_slug[0]
 
-        if submission_set_tag and submission_set_slug:
-            _create_submission_set(request, submission_set_tag, submission_set_slug)
+        if submission_set_tag:
+            _create_submission_set(request, submission_set_tag)
 
     return HttpResponse("OK")
 
@@ -69,22 +67,22 @@ if getattr(settings, "SAQ_LAZYSIGNUP", False):
 else:
     submit = login_required(_submit)
 
-def _create_submission_set(request, submission_set_tag, submission_set_slug):
+def _create_submission_set(request, submission_set_tag):
     """ Creates a submission set from any submissions matching the given
         tag that are not part of an existing set.
     """
     # Find maximum slug name
     exists = True
     bump = 1
-    try_slug = submission_set_slug + "1"
+    try_slug = submission_set_tag + "1"
     while exists:
-        try_slug = "%s%s" % (submission_set_slug, bump)
+        try_slug = "%s%s" % (submission_set_tag, bump)
         bump = bump + 1
         exists = SubmissionSet.objects.filter(
             user=request.user,
             slug=try_slug
         )
-    submission_set_slug = try_slug
+    submission_set_tag = try_slug
 
     # Add all tagged submissions to this set (if not already in a set)
     set_questions = Question.objects.filter(tags__name=submission_set_tag).values_list('slug', flat=True)
@@ -98,7 +96,7 @@ def _create_submission_set(request, submission_set_tag, submission_set_slug):
     # Create a new set
     if submissions:
         submission_set = SubmissionSet.objects.create(
-            slug=submission_set_slug,
+            slug=submission_set_tag,
             user=request.user
         )
         submissions.update(submission_set=submission_set)

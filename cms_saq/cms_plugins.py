@@ -8,7 +8,7 @@ from cms.plugin_pool import plugin_pool
 
 from cms_saq.models import Question, Answer, GroupedAnswer, Submission, \
         FormNav, ProgressBar, SectionedScoring, ScoreSection, BulkAnswer, \
-        QuestionnaireText
+        QuestionnaireText, SubmissionSetReview
 
 
 from cms.plugins.text.cms_plugins import TextPlugin
@@ -251,6 +251,19 @@ class BulkAnswerPlugin(CMSPluginBase):
         context['instance'] = instance
         return context
 
+class SubmissionSetReviewPlugin(CMSPluginBase):
+    model = SubmissionSetReview
+    name = "Review Submissions"
+    module = "SAQ"
+    render_template = "cms_saq/submission_set_review.html"
+
+    def render(self, context, instance, placeholder):
+        context.update({
+            'instance': instance,
+            'submission_sets': instance.sets_for_user(user=context['user'])
+        })
+        return context
+
 plugin_pool.register_plugin(SingleChoiceQuestionPlugin)
 plugin_pool.register_plugin(MultiChoiceQuestionPlugin)
 plugin_pool.register_plugin(DropDownQuestionPlugin)
@@ -258,6 +271,7 @@ plugin_pool.register_plugin(GroupedDropDownQuestionPlugin)
 plugin_pool.register_plugin(FreeTextQuestionPlugin)
 plugin_pool.register_plugin(FreeNumberQuestionPlugin)
 plugin_pool.register_plugin(FormNavPlugin)
+plugin_pool.register_plugin(SubmissionSetReviewPlugin)
 plugin_pool.register_plugin(SectionedScoringPlugin)
 plugin_pool.register_plugin(ProgressBarPlugin)
 plugin_pool.register_plugin(BulkAnswerPlugin)
