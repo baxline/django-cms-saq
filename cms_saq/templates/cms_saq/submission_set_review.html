@@ -1,11 +1,12 @@
 {% load cms_tags sekizai_tags %}
 {% load i18n %}
+{% load url from future %}
 
 {% addtoblock "js" %}
 <script type="text/javascript">
     $(document).ready(function () {
         $('.edit').click(function(){
-            var url = '{% url cms_saq_edit %}';
+            var url = '{% url 'cms_saq_edit' %}';
             var pk = $(this).attr('id').replace("edit-", "");
 
             // Do a post request to enable editing of this set
@@ -22,7 +23,7 @@
         });
 
         $('.delete').click(function(){
-            var url = '{% url cms_saq_edit %}';
+            var url = '{% url 'cms_saq_edit' %}';
             var pk = $(this).attr('id').replace("edit-", "");
 
             var r = confirm("Completely remove these answers?");
