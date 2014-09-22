@@ -169,12 +169,13 @@ class FormNav(CMSPlugin):
     end_page_label = models.CharField(max_length=255, blank=True, null=True)
     end_page_condition_question = models.ForeignKey(
         Question, null=True, blank=True)
-        
+
     submission_set_tag = models.CharField(
         max_length=255, blank=True, null=True)
 
     def copy_relations(self, old):
         self.end_page_condition_question = old.end_page_condition_question
+
 
 class SubmissionSetReview(CMSPlugin):
     """ Plugin to list and review questionnaire submission sets
@@ -191,9 +192,6 @@ class SubmissionSetReview(CMSPlugin):
             slug__startswith=self.submission_set_tag
         )
         return _sets
-    )
-
-
 
 
 class SectionedScoring(CMSPlugin):
