@@ -188,6 +188,8 @@ class SubmissionSetReview(CMSPlugin):
 
     count_optional = models.BooleanField(default=False)
 
+    label = models.CharField(max_length=255)
+
     def sets_for_user(self, user):
         """ Return available submission sets for the given user
         """

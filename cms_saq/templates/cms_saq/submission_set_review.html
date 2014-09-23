@@ -49,7 +49,7 @@
 
 {% if submission_sets %}
 <div class="submissions-sets">
-    <h2>Your submissions to this questionnaire:</h2>
+    <h2>{{ instance.label }}:</h2>
     <ul>
         {% for sset in submission_sets %}
         <li>
