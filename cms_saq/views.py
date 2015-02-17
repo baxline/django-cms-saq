@@ -24,7 +24,7 @@ def _submit(request):
         try:
             question = Question.objects.get(
                 slug=question_slug,
-                #placeholder__page__publisher_is_draft=False,
+                placeholder__page__publisher_is_draft=False,
             )
         except Question.DoesNotExist:
             return HttpResponseBadRequest(
